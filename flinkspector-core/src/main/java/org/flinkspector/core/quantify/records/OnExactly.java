@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.flinkspector.core.quantify.list;
+package org.flinkspector.core.quantify.records;
 
 import org.hamcrest.Description;
 import org.hamcrest.Factory;
@@ -35,7 +35,7 @@ public class OnExactly<T> extends WhileList<T> {
 	 * Default constructor
 	 *
 	 * @param matcher to apply to the {@link Iterable}
-	 * @param n number of expected positive matches
+	 * @param n       number of expected positive matches
 	 */
 	public OnExactly(Matcher<T> matcher, int n) {
 		super(matcher);
@@ -64,7 +64,7 @@ public class OnExactly<T> extends WhileList<T> {
 
 	@Factory
 	public static <T> OnExactly<T> exactly(Matcher<T> matcher, int n) {
-		return new OnExactly<T>(matcher,n);
+		return new OnExactly<T>(matcher, n);
 	}
 }
 

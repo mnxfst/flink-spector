@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.flinkspector.core.quantify.list;
+package org.flinkspector.core.quantify.records;
 
 import org.hamcrest.Matcher;
 import org.hamcrest.core.IsNot;
@@ -29,75 +29,82 @@ public class ListQuantifyMatchers {
 	/**
 	 * Creates a {@link Matcher} that is successful if at least one
 	 * item in the examined {@link Iterable} is a positive match.
+	 *
 	 * @param matcher to apply to the list
 	 * @param <T>
 	 * @return {@link Matcher}
 	 */
 	public static <T> Matcher<Iterable<T>> any(Matcher<T> matcher) {
-		return OnAny.<T>any(matcher);
+		return OnAny.any(matcher);
 	}
 
 	/**
 	 * Creates a {@link Matcher} that is successful if each
 	 * item in the examined {@link Iterable} is a positive match.
+	 *
 	 * @param matcher to apply to the list
 	 * @param <T>
 	 * @return {@link Matcher}
 	 */
 	public static <T> Matcher<Iterable<T>> each(Matcher<T> matcher) {
-		return OnEach.<T>each(matcher);
+		return OnEach.each(matcher);
 	}
 
 	/**
 	 * Creates a {@link Matcher} that is successful if exactly one
 	 * item in the examined {@link Iterable} is a positive match.
+	 *
 	 * @param matcher to apply to the list
 	 * @param <T>
 	 * @return {@link Matcher}
 	 */
-	public static  <T> Matcher<Iterable<T>> one(Matcher<T> matcher) {
-		return OnOne.<T>one(matcher);
+	public static <T> Matcher<Iterable<T>> one(Matcher<T> matcher) {
+		return OnOne.one(matcher);
 	}
 
 	/**
 	 * Creates a {@link Matcher} that is successful if at least a number of
 	 * items in the examined {@link Iterable} is a positive  match.
+	 *
 	 * @param matcher to apply to the list
-	 * @param n number of positive matches
+	 * @param n       number of positive matches
 	 * @param <T>
 	 * @return {@link Matcher}
 	 */
 	public static <T> Matcher<Iterable<T>> atLeast(Matcher<T> matcher, int n) {
-		return OnAtLeast.<T>atLeast(matcher,n);
+		return OnAtLeast.atLeast(matcher, n);
 	}
 
 	/**
 	 * Creates a {@link Matcher} that is successful if at most a number of
 	 * items in the examined {@link Iterable} is a positive match.
+	 *
 	 * @param matcher to apply to the list
-	 * @param n number of positive matches
+	 * @param n       number of positive matches
 	 * @param <T>
 	 * @return {@link Matcher}
 	 */
 	public static <T> Matcher<Iterable<T>> atMost(Matcher<T> matcher, int n) {
-		return OnAtMost.<T>atMost(matcher,n);
+		return OnAtMost.atMost(matcher, n);
 	}
 
 	/**
 	 * Creates a {@link Matcher} that is successful if an exact number of
 	 * items in the examined {@link Iterable} is a positive match.
+	 *
 	 * @param matcher to apply to the list
-	 * @param n number of positive matches
+	 * @param n       number of positive matches
 	 * @param <T>
 	 * @return {@link Matcher}
 	 */
 	public static <T> Matcher<Iterable<T>> exactly(Matcher<T> matcher, int n) {
-		return OnExactly.<T>exactly(matcher,n);
+		return OnExactly.exactly(matcher, n);
 	}
 
 	/**
 	 * Creates a {@link Matcher} that is successful if an exact number of
 	 * items in the examined {@link Iterable} is a positive match.
+	 *
 	 * @param matcher to apply to the list
 	 * @param <T>
 	 * @return {@link Matcher}
@@ -105,7 +112,6 @@ public class ListQuantifyMatchers {
 	public static <T> Matcher<Iterable<T>> none(Matcher<T> matcher) {
 		return IsNot.not(any(matcher));
 	}
-
 
 
 }

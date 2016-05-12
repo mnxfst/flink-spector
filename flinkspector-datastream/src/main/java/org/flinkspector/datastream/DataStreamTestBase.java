@@ -20,8 +20,8 @@ import org.apache.flink.streaming.api.TimeCharacteristic;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.environment.LocalStreamEnvironment;
+import org.flinkspector.core.Order;
 import org.flinkspector.core.collection.ExpectedRecords;
-import org.flinkspector.core.collection.MatcherBuilder;
 import org.flinkspector.core.input.Input;
 import org.flinkspector.core.input.InputBuilder;
 import org.flinkspector.core.quantify.HamcrestVerifier;
@@ -35,6 +35,7 @@ import org.flinkspector.datastream.input.EventTimeSourceBuilder;
 import org.flinkspector.datastream.input.SourceBuilder;
 import org.flinkspector.datastream.input.time.After;
 import org.flinkspector.datastream.input.time.Before;
+import org.flinkspector.datastream.input.time.InWindow;
 import org.hamcrest.Matcher;
 
 import java.util.Collection;
@@ -44,12 +45,12 @@ import java.util.concurrent.TimeUnit;
  * Offers a base for testing Flink streaming applications
  * To use, extend your JUnitTest with this class.
  */
-public class StreamTestBase {
+public class DataStreamTestBase {
 
 	/**
 	 * Test Environment
 	 */
-	private DataStreamTestEnvironment testEnv;
+	DataStreamTestEnvironment testEnv;
 
 	/**
 	 * Creates a new {@link DataStreamTestEnvironment}
@@ -59,6 +60,35 @@ public class StreamTestBase {
 		testEnv = DataStreamTestEnvironment.createTestEnvironment(1);
 		testEnv.setStreamTimeCharacteristic(TimeCharacteristic.EventTime);
 	}
+
+	/**
+	 * Sets the parallelism for operations executed through this environment.
+	 * Setting a parallelism of x here will cause all operators (such as map,
+	 * batchReduce) to run with x parallel instances. This method overrides the
+	 * default parallelism for this environment. The
+	 * {@link LocalStreamEnvironment} uses by default a value equal to the
+	 * number of hardware contexts (CPU cores / threads). When executing the
+	 * program via the command line client from a JAR file, the default degree
+	 * of parallelism is the one configured for that setup.
+	 *
+	 * @param parallelism The parallelism
+	 */
+	public void setParrallelism(Integer parallelism) {
+		testEnv.setParallelism(parallelism);
+	}
+
+	/**
+	 * Gets the parallelism with which operation are executed by default.
+	 * Operations can individually override this value to use a specific
+	 * parallelism.
+	 *
+	 * @return The parallelism used by operations, unless they override that
+	 * value.
+	 */
+	public Integer getParrallelism() {
+		return testEnv.getParallelism();
+	}
+
 
 	/**
 	 * Creates a DataStreamSource from an EventTimeInput object.
@@ -138,7 +168,7 @@ public class StreamTestBase {
 	 * @return the created sink.
 	 */
 	public <IN> TestSink<IN> createTestSink(OutputVerifier<IN> verifier,
-	                                        VerifyFinishedTrigger trigger) {
+											VerifyFinishedTrigger trigger) {
 		return testEnv.createTestSink(verifier, trigger);
 	}
 
@@ -161,7 +191,7 @@ public class StreamTestBase {
 	 * @return the created sink.
 	 */
 	public <IN> TestSink<IN> createTestSink(org.hamcrest.Matcher<Iterable<IN>> matcher,
-	                                        VerifyFinishedTrigger trigger) {
+											VerifyFinishedTrigger trigger) {
 		OutputVerifier<IN> verifier = new HamcrestVerifier<>(matcher);
 		return createTestSink(verifier, trigger);
 	}
@@ -187,8 +217,8 @@ public class StreamTestBase {
 	 * @param <T>     type of the stream.
 	 */
 	public <T> void assertStream(DataStream<T> stream,
-	                             Matcher<Iterable<T>> matcher,
-	                             VerifyFinishedTrigger trigger) {
+								 Matcher<Iterable<T>> matcher,
+								 VerifyFinishedTrigger trigger) {
 		stream.addSink(createTestSink(matcher, trigger));
 	}
 
@@ -240,6 +270,17 @@ public class StreamTestBase {
 	//================================================================================
 
 	/**
+	 * Creates an {@link org.flinkspector.datastream.input.time.InWindow} object.
+	 *
+	 * @param time value.
+	 * @param unit of time.
+	 * @return {@link org.flinkspector.datastream.input.time.InWindow}
+	 */
+	public static InWindow intoWindow(long time, TimeUnit unit) {
+		return InWindow.to(time, unit);
+	}
+
+	/**
 	 * Creates an {@link After} object.
 	 *
 	 * @param span length of span.
@@ -277,8 +318,8 @@ public class StreamTestBase {
 		return n;
 	}
 
-	public static final MatcherBuilder.Order strict = MatcherBuilder.Order.STRICT;
-	public static final MatcherBuilder.Order notStrict = MatcherBuilder.Order.NONSTRICT;
+	public static final Order strict = Order.STRICT;
+	public static final Order notStrict = Order.NONSTRICT;
 	public static final TimeUnit seconds = TimeUnit.SECONDS;
 	public static final TimeUnit minutes = TimeUnit.MINUTES;
 	public static final TimeUnit hours = TimeUnit.HOURS;

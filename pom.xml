@@ -20,8 +20,26 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>org.flinkspector</groupId>
-    <artifactId>flinkspector-parent</artifactId>
-    <version>0.1-SNAPSHOT</version>
+    <artifactId>flinkspector-parent_2.11</artifactId>
+    <version>0.4-SNAPSHOT</version>
+
+
+    <name>Flinkspector</name>
+    <description>Lightweight integration tests for Apache Flink</description>
+    <url>https://github.com/ottogroup/flink-spector</url>
+
+    <scm>
+        <url>https://github.com/ottogroup/flink-spector</url>
+    </scm>
+
+    <licenses>
+        <license>
+            <name>Apache License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
     <modules>
         <module>flinkspector-dataset</module>
         <module>flinkspector-datastream</module>
@@ -34,8 +52,8 @@
         <slf4j.version>1.7.7</slf4j.version>
         <guava.version>18.0</guava.version>
         <!-- Default scala versions, may be overwritten by build profiles -->
-        <scala.version>2.10.4</scala.version>
-        <scala.binary.version>2.10</scala.binary.version>
+        <scala.version>2.11.7</scala.version>
+        <scala.binary.version>2.11</scala.binary.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
@@ -45,13 +63,13 @@
         <!-- flink -->
         <dependency>
             <groupId>org.apache.flink</groupId>
-            <artifactId>flink-runtime_2.10</artifactId>
+            <artifactId>flink-runtime_2.11</artifactId>
             <version>${flink.version}</version>
             <type>test-jar</type>
         </dependency>
         <dependency>
             <groupId>org.apache.flink</groupId>
-            <artifactId>flink-test-utils_2.10</artifactId>
+            <artifactId>flink-test-utils_2.11</artifactId>
             <version>${flink.version}</version>
         </dependency>
         <!-- zeromq -->
@@ -96,15 +114,49 @@
 
 
     <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>net.alchim31.maven</groupId>
+                    <artifactId>scala-maven-plugin</artifactId>
+                    <version>3.2.2</version>
+                    <configuration>
+                        <recompileMode>incremental</recompileMode>
+                        <javacArgs>
+                            <javacArg>-source</javacArg>
+                            <javacArg>1.8</javacArg>
+                            <javacArg>-target</javacArg>
+                            <javacArg>1.8</javacArg>
+                        </javacArgs>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+
         <plugins>
+            <plugin>
+                <!--
+                This plugin can package the main artifact's sources (src/main/java)
+                -->
+                <artifactId>maven-source-plugin</artifactId>
+                <version>2.4</version>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <!-- just define the Java version to be used for compiling and plugins -->
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.1</version><!--$NO-MVN-MAN-VER$-->
                 <configuration>
-                    <source>1.7</source>
-                    <target>1.7</target>
+                    <source>1.8</source>
+                    <target>1.8</target>
                     <!-- The output of Xlint is not shown by default, but we activate it for the QA bot
                     to be able to get more warnings -->
                     <compilerArgument>-Xlint:all</compilerArgument>
@@ -112,5 +164,12 @@
             </plugin>
         </plugins>
     </build>
+
+    <distributionManagement>
+        <repository>
+            <id>bintray-ottogroup-maven</id>
+            <url>https://api.bintray.com/maven/ottogroup/maven/flinkspector</url>
+        </repository>
+    </distributionManagement>
 
 </project>

@@ -47,12 +47,17 @@ public abstract class EventTimeInputTranslator<IN, OUT> implements EventTimeInpu
 		return translateInput(input);
 	}
 
+	@Override
+	public Boolean getFlushWindowsSetting() {
+		return input.getFlushWindowsSetting();
+	}
+
 	private List<StreamRecord<OUT>> translateInput(final EventTimeInput<IN> input) {
 		List<StreamRecord<OUT>> out = new ArrayList<>();
 		for (StreamRecord<IN> elem : input.getInput()) {
 			out.add(new StreamRecord<OUT>(
-							translate(elem.getValue()),
-							elem.getTimestamp())
+					translate(elem.getValue()),
+					elem.getTimestamp())
 			);
 		}
 		return out;

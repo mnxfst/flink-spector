@@ -13,26 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.flinkspector.core
 
-import java.util.{List => JList}
+package org.flinkspector.datastream.input.time;
 
-import org.flinkspector.core.input.Input
-import org.scalatest.concurrent.Timeouts
-import org.scalatest.mock.MockitoSugar
-import org.scalatest.{FlatSpec, Matchers, OptionValues}
+/**
+ * Specifies a moment for a record to generate a timestamp.
+ */
+public abstract class Moment {
 
-import scala.collection.JavaConversions._
+	/**
+	 * Getter for defined time span
+	 *
+	 * @param currentTimestamp the timestamp of the current record
+	 * @return time span in milliseconds
+	 */
+	public abstract long getTimestamp(long currentTimestamp);
 
-abstract class CoreSpec
-  extends FlatSpec
-    with Matchers
-    with OptionValues
-    with MockitoSugar
-    with Timeouts {
-
-  class TestInput[T](input: List[T]) extends Input[T] {
-    override def getInput: JList[T] = input
-  }
-
+	public long getShift() {
+		return 0;
+	}
 }

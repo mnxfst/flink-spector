@@ -19,18 +19,21 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
-        <artifactId>flinkspector-parent</artifactId>
         <groupId>org.flinkspector</groupId>
-        <version>0.1-SNAPSHOT</version>
+        <artifactId>flinkspector-parent_2.11</artifactId>
+        <version>0.4-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>flinkspector-dataset</artifactId>
+    <artifactId>flinkspector-dataset_2.11</artifactId>
+    <name>flinkspector-dataset</name>
+
+    <packaging>jar</packaging>
 
     <dependencies>
         <dependency>
             <groupId>org.flinkspector</groupId>
-            <artifactId>flinkspector-core</artifactId>
+            <artifactId>flinkspector-core_2.11</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
@@ -48,8 +51,8 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.1</version><!--$NO-MVN-MAN-VER$-->
                 <configuration>
-                    <source>1.7</source>
-                    <target>1.7</target>
+                    <source>1.8</source>
+                    <target>1.8</target>
                     <!-- The output of Xlint is not shown by default, but we activate it for the QA bot
                     to be able to get more warnings -->
                     <compilerArgument>-Xlint:all</compilerArgument>
@@ -73,7 +76,6 @@
             <plugin>
                 <groupId>net.alchim31.maven</groupId>
                 <artifactId>scala-maven-plugin</artifactId>
-                <version>3.1.4</version>
                 <executions>
                     <!-- Run scala compiler in the process-resources phase, so that dependencies on
                         scala classes can be resolved later in the (Java) compile phase -->
@@ -154,7 +156,7 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>build-helper-maven-plugin</artifactId>
-                <version>1.7</version>
+                <version>1.8</version>
                 <executions>
                     <!-- Add src/main/scala to eclipse build path -->
                     <execution>

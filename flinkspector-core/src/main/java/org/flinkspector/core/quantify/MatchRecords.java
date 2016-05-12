@@ -17,7 +17,6 @@
 package org.flinkspector.core.quantify;
 
 import com.google.common.annotations.VisibleForTesting;
-import org.flinkspector.core.KeyMatcherPair;
 import org.flinkspector.core.quantify.assertions.MatcherCombiner;
 import org.hamcrest.Matcher;
 
@@ -33,12 +32,13 @@ import java.util.List;
  * 		.assertThat(lessThan(11))
  * 		anyOfThem().onEachRecord();
  * </pre>
+ *
  * @param <T>
  */
 public class MatchRecords<T> {
 
 	/**
-	 * List of {@link KeyMatcherPair} representing the assertions.
+	 * List of {@link Matcher} representing the assertions.
 	 */
 	private List<Matcher<? super T>> matchers = new ArrayList<>();
 
@@ -65,6 +65,7 @@ public class MatchRecords<T> {
 
 	/**
 	 * Add a {@link Matcher} to the list of assertions to verify.
+	 *
 	 * @param matcher testing the output records
 	 */
 	public MatchRecords<T> assertThat(Matcher<? super T> matcher) {

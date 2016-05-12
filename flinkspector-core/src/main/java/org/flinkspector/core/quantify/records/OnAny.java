@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.flinkspector.core.quantify.list;
+package org.flinkspector.core.quantify.records;
 
 import org.hamcrest.Description;
 import org.hamcrest.Factory;
@@ -23,12 +23,14 @@ import org.hamcrest.Matcher;
 /**
  * Provides a {@link Matcher}s that is successful if at least one
  * item in the examined {@link Iterable} is a positive match.
+ *
  * @param <T>
  */
 public class OnAny<T> extends UntilList<T> {
 
 	/**
 	 * Default Constructor
+	 *
 	 * @param matcher to apply to the {@link Iterable}
 	 */
 	public OnAny(Matcher<T> matcher) {

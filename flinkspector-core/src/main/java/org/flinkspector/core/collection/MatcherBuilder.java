@@ -16,6 +16,7 @@
 
 package org.flinkspector.core.collection;
 
+import org.flinkspector.core.Order;
 import org.flinkspector.core.quantify.OutputMatcher;
 import org.flinkspector.matcher.ListMatcherBuilder;
 import org.hamcrest.Description;
@@ -24,6 +25,7 @@ import java.util.List;
 
 /**
  * Wrapper for the scala {@link ListMatcherBuilder}
+ *
  * @param <T>
  */
 public class MatcherBuilder<T> extends OutputMatcher<T> {
@@ -58,7 +60,7 @@ public class MatcherBuilder<T> extends OutputMatcher<T> {
 	 * elements in the output
 	 */
 	public FromListMatcher inOrder(Order order) {
-		if(order == Order.STRICT) {
+		if (order == Order.STRICT) {
 			return new SeriesMatcher<T>(builder);
 		}
 		return new OrderMatcher<T>(builder);
@@ -74,7 +76,4 @@ public class MatcherBuilder<T> extends OutputMatcher<T> {
 		return builder.validate(item);
 	}
 
-	public enum Order {
-		STRICT,NONSTRICT
-	}
 }

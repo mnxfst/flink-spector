@@ -24,8 +24,12 @@ import java.util.List;
 /**
  * Implement this interface when you want to provide
  * timestamped input for tests.
+ *
  * @param <T>
  */
 public interface EventTimeInput<T> extends Input<StreamRecord<T>> {
+
+	Boolean getFlushWindowsSetting();
+
 	List<StreamRecord<T>> getInput();
 }

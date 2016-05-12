@@ -25,22 +25,25 @@ import org.scalatest.concurrent.Timeouts
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FlatSpec, Matchers, OptionValues}
 
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
+
 
 abstract class CoreSpec
   extends FlatSpec
-  with Matchers
-  with OptionValues
-  with MockitoSugar
-  with Timeouts {
+    with Matchers
+    with OptionValues
+    with MockitoSugar
+    with Timeouts {
 
   class TestEventTimeInput[T](input: List[T]) extends EventTimeInput[T] {
     override def getInput: JList[StreamRecord[T]] =
-      input.map(new streamrecord.StreamRecord[T](_, 0))
+      input.map(new streamrecord.StreamRecord[T](_, 0)).asJava
+
+    override def getFlushWindowsSetting = false
   }
 
   class TestInput[T](input: List[T]) extends Input[T] {
-    override def getInput: JList[T] = input
+    override def getInput: JList[T] = input.asJava
   }
 
   def recordsToValues[T](lst: Iterable[StreamRecord[T]]): List[T] =

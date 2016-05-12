@@ -19,61 +19,62 @@ package org.flinkspector.datastream
 import org.apache.flink.streaming.api.datastream.DataStream
 import org.flinkspector.CoreSpec
 import org.flinkspector.core.collection.ExpectedRecords
+
 import scala.collection.JavaConversions._
 
 class StreamTestBaseSpec extends CoreSpec {
 
   it should "run a basic test" in {
-    val base = new StreamTestBase
+    val base = new DataStreamTestBase
     base.initialize()
 
-    val coll : java.util.Collection[Int] = List(1,2,3,4)
-    val stream : DataStream[Int] = base.createTestStream(coll)
+    val coll: java.util.Collection[Int] = List(1, 2, 3, 4)
+    val stream: DataStream[Int] = base.createTestStream(coll)
     val matcher = ExpectedRecords.create(coll)
 
-    base.assertStream(stream,matcher)
+    base.assertStream(stream, matcher)
     base.executeTest()
   }
 
   it should "fail a basic test" in {
-    val base = new StreamTestBase
+    val base = new DataStreamTestBase
     base.initialize()
 
-    val coll : java.util.Collection[Int] = List(1,2,3,4)
-    val stream : DataStream[Int] = base.createTestStream(List(1,2,3))
+    val coll: java.util.Collection[Int] = List(1, 2, 3, 4)
+    val stream: DataStream[Int] = base.createTestStream(List(1, 2, 3))
     val matcher = ExpectedRecords.create(coll)
 
-    base.assertStream(stream,matcher)
-    an [AssertionError] shouldBe thrownBy(base.executeTest())
+    base.assertStream(stream, matcher)
+    an[AssertionError] shouldBe thrownBy(base.executeTest())
   }
 
 
   it should "run a basic test with two sinks" in {
-    val base = new StreamTestBase
+    val base = new DataStreamTestBase
     base.initialize()
 
-    val coll : java.util.Collection[Int] = List(1,2,3,4)
-    val stream1 : DataStream[Int] = base.createTestStream(coll)
-    val stream2 : DataStream[Int] = base.createTestStream(coll)
+    val coll: java.util.Collection[Int] = List(1, 2, 3, 4)
+    val stream1: DataStream[Int] = base.createTestStream(coll)
+    val stream2: DataStream[Int] = base.createTestStream(coll)
     val matcher = ExpectedRecords.create(coll)
 
-    base.assertStream(stream1,matcher)
-    base.assertStream(stream2,matcher)
+    base.assertStream(stream1, matcher)
+    base.assertStream(stream2, matcher)
     base.executeTest()
   }
 
   it should "fail a basic test with two sinks" in {
-    val base = new StreamTestBase
+    val base = new DataStreamTestBase
     base.initialize()
 
-    val coll : java.util.Collection[Int] = List(1,2,3,4)
-    val stream1 : DataStream[Int] = base.createTestStream(coll)
-    val stream2 : DataStream[Int] = base.createTestStream(List(1,2,3))
+    val coll: java.util.Collection[Int] = List(1, 2, 3, 4)
+    val stream1: DataStream[Int] = base.createTestStream(coll)
+    val stream2: DataStream[Int] = base.createTestStream(List(1, 2, 3))
     val matcher = ExpectedRecords.create(coll)
 
-    base.assertStream(stream1,matcher)
-    base.assertStream(stream2,matcher)
-    an [AssertionError] shouldBe thrownBy (base.executeTest())
+    base.assertStream(stream1, matcher)
+    base.assertStream(stream2, matcher)
+    an[AssertionError] shouldBe thrownBy(base.executeTest())
   }
 
 }

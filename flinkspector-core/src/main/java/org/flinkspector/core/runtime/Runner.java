@@ -86,11 +86,9 @@ public abstract class Runner {
 	 * The current port used for transmitting the output from via 0MQ
 	 * to the {@link OutputSubscriber}s.
 	 */
-	private Integer currentPort;
+	private volatile Integer currentPort;
 
 	private final ZMQSubscribers subscribers = new ZMQSubscribers();
-
-
 
 
 	public Runner(ForkableFlinkMiniCluster executor) {
@@ -108,19 +106,14 @@ public abstract class Runner {
 
 	private class ZMQSubscribers {
 
-		private final ZMQ.Context context;
+		private final ZMQ.Context context = ZMQ.context(2);
 		private List<ZMQ.Socket> sockets = new ArrayList<>();
 
-		ZMQSubscribers() {
-			context = ZMQ.context(2);
-		}
 
 		ZMQ.Socket getSubscriber(String address) {
 			ZMQ.Socket subscriber = context.socket(ZMQ.PULL);
 			subscriber.setLinger(1000);
-
 			subscriber.bind(address);
-
 			sockets.add(subscriber);
 			return subscriber;
 		}
@@ -142,7 +135,7 @@ public abstract class Runner {
 
 	/**
 	 * Stop the execution of the test.
-	 * <p/>
+	 * <p>
 	 * Shutting the local cluster down will, will notify
 	 * the sockets when the sinks are closed.
 	 * Thus terminating the execution gracefully.
@@ -151,8 +144,8 @@ public abstract class Runner {
 		if (stopped.get()) {
 			return;
 		}
-			subscribers.close();
 		stopped.set(true);
+		subscribers.close();
 		stopTimer.cancel();
 		stopTimer.purge();
 		try {
@@ -177,7 +170,10 @@ public abstract class Runner {
 		} catch (JobTimeoutException
 				| IllegalStateException e) {
 			//cluster has been shutdown forcefully, most likely by at timeout.
-			stopped.set(true);
+			if (!stopped.get()) {
+				stopped.set(true);
+				subscribers.close();
+			}
 		}
 
 		//====================
@@ -192,7 +188,7 @@ public abstract class Runner {
 					//unwrap exception
 					throw e.getCause().getCause();
 				}
-				if(!stopped.get()) {
+				if (!stopped.get()) {
 					throw e.getCause();
 				}
 			}
@@ -253,11 +249,11 @@ public abstract class Runner {
 	 * @param verifier verifier
 	 * @param trigger
 	 */
-	public <OUT> int registerListener(OutputVerifier<OUT> verifier,
-	                                  VerifyFinishedTrigger<? super OUT> trigger) {
+	public synchronized <OUT> int registerListener(OutputVerifier<OUT> verifier,
+												   VerifyFinishedTrigger<? super OUT> trigger) {
 		int port = getAvailablePort();
 
-		ZMQ.Socket subscriber = subscribers.getSubscriber("tcp://127.0.0.1:" + port);
+		ZMQ.Socket subscriber = subscribers.getSubscriber("tcp://localhost:" + port);
 
 		ListenableFuture<OutputSubscriber.ResultState> future = executorService
 				.submit(new OutputSubscriber<OUT>(subscriber, verifier, trigger));
@@ -268,7 +264,7 @@ public abstract class Runner {
 
 			@Override
 			public void onSuccess(ResultState state) {
-				if(state != ResultState.SUCCESS) {
+				if (state != ResultState.SUCCESS) {
 					if (runningListeners.decrementAndGet() == 0) {
 						stopExecution();
 					}
@@ -277,10 +273,7 @@ public abstract class Runner {
 
 			@Override
 			public void onFailure(Throwable throwable) {
-				//check if other sockets are still running
-				if (runningListeners.decrementAndGet() == 0) {
-					stopExecution();
-				}
+				stopExecution();
 			}
 		});
 

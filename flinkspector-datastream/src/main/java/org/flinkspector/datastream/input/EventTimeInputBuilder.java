@@ -16,7 +16,10 @@
 
 package org.flinkspector.datastream.input;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.flink.streaming.runtime.streamrecord.StreamRecord;
+import org.flinkspector.datastream.input.time.Instant;
+import org.flinkspector.datastream.input.time.Moment;
 import org.flinkspector.datastream.input.time.TimeSpan;
 
 import java.util.ArrayList;
@@ -32,16 +35,50 @@ import java.util.List;
 public class EventTimeInputBuilder<T> implements EventTimeInput<T> {
 
 	/**
-	 * List of input containing StreamRecords
+	 * List of input containing StreamRecords and time shifts
 	 */
-	private ArrayList<StreamRecord<T>> input = new ArrayList<>();
+	private ArrayList<Pair<StreamRecord<T>, Long>> input = new ArrayList<>();
 
-	private EventTimeInputBuilder(StreamRecord<T> record) {
-		input.add(record);
+	private Boolean flushWindows = false;
+
+	/**
+	 * Helper for adding records.
+	 *
+	 * @param record
+	 */
+	private void add(StreamRecord<T> record) {
+		input.add(Pair.of(record, 0L));
 	}
 
 	/**
-	 *  Create an {@link EventTimeInputBuilder} with the first record as input.
+	 * Helper for adding records.
+	 *
+	 * @param record
+	 */
+	private void addWithShift(StreamRecord<T> record, Long shift) {
+		input.add(Pair.of(record, shift));
+	}
+
+	private void addWithShift(T elem, Long timestamp, Long shift) {
+		input.add(Pair.of(new StreamRecord<T>(elem, timestamp), shift));
+	}
+
+	private Long getLastTimestamp() {
+		Pair<StreamRecord<T>, Long> lastRecord = input.get(input.size() - 1);
+		return lastRecord.getLeft().getTimestamp() + lastRecord.getRight();
+	}
+
+	private EventTimeInputBuilder(StreamRecord<T> record) {
+		add(record);
+	}
+
+	private EventTimeInputBuilder(StreamRecord<T> record, Long shift) {
+		addWithShift(record, shift);
+	}
+
+
+	/**
+	 * Create an {@link EventTimeInputBuilder} with the first record as input.
 	 *
 	 * @param record value
 	 * @param <T>
@@ -55,7 +92,7 @@ public class EventTimeInputBuilder<T> implements EventTimeInput<T> {
 	}
 
 	/**
-	 *  Create an {@link EventTimeInputBuilder} with the first record as input.
+	 * Create an {@link EventTimeInputBuilder} with the first record as input.
 	 *
 	 * @param record value
 	 * @param <T>
@@ -69,17 +106,17 @@ public class EventTimeInputBuilder<T> implements EventTimeInput<T> {
 	}
 
 	/**
-	 *  Create an {@link EventTimeInputBuilder} with the first record as input.
+	 * Create an {@link EventTimeInputBuilder} with the first record as input.
 	 *
 	 * @param record value
 	 * @param <T>
 	 * @return {@link EventTimeInputBuilder}
 	 */
-	public static <T> EventTimeInputBuilder<T> startWith(T record, TimeSpan span) {
+	public static <T> EventTimeInputBuilder<T> startWith(T record, Moment moment) {
 		if (record == null) {
 			throw new IllegalArgumentException("Elem has to be not null!");
 		}
-		return new EventTimeInputBuilder<T>(new StreamRecord<T>(record, span.getMillis()));
+		return new EventTimeInputBuilder<T>(new StreamRecord<T>(record, moment.getTimestamp(0)), moment.getShift());
 	}
 
 	/**
@@ -110,7 +147,21 @@ public class EventTimeInputBuilder<T> implements EventTimeInput<T> {
 		if (record == null) {
 			throw new IllegalArgumentException("Elem has to be not null!");
 		}
-		input.add(new StreamRecord<T>(record, timeStamp));
+		add(new StreamRecord<T>(record, timeStamp));
+		return this;
+	}
+
+	/**
+	 * Add an element with the timestamp of the previous record to the input.
+	 *
+	 * @param record
+	 * @return
+	 */
+	public EventTimeInputBuilder<T> emit(T record) {
+		if (record == null) {
+			throw new IllegalArgumentException("Elem has to be not null!");
+		}
+		add(new StreamRecord<T>(record, getLastTimestamp()));
 		return this;
 	}
 
@@ -122,13 +173,12 @@ public class EventTimeInputBuilder<T> implements EventTimeInput<T> {
 	 * @param timeSpan {@link TimeSpan}
 	 * @return
 	 */
-	public EventTimeInputBuilder<T> emit(T record, TimeSpan timeSpan) {
+	public EventTimeInputBuilder<T> emit(T record, Moment timeSpan) {
 		if (timeSpan == null) {
 			throw new IllegalArgumentException("TimeBetween has to bo not null!");
 		}
-		long lastTimeStamp = input.get(input.size() - 1).getTimestamp();
-		long newTimeStamp = lastTimeStamp + timeSpan.getMillis();
-		emit(record, newTimeStamp);
+		long newTimeStamp = timeSpan.getTimestamp(getLastTimestamp());
+		addWithShift(new StreamRecord<T>(record, newTimeStamp), timeSpan.getShift());
 		return this;
 	}
 
@@ -151,18 +201,35 @@ public class EventTimeInputBuilder<T> implements EventTimeInput<T> {
 	 *
 	 * @param times number of times the input ist will be repeated.
 	 */
-	public EventTimeInputBuilder<T> emit(T elem, TimeSpan timeInterval, int times) {
-		if (timeInterval == null) {
+	public EventTimeInputBuilder<T> emit(T elem, Moment moment, int times) {
+		if (moment == null) {
 			throw new IllegalArgumentException("TimeBetween has to bo not null!");
 		}
 		if (times < 1) {
 			throw new IllegalArgumentException("Times has to be greater than 1.");
 		}
-		long ts = input.get(input.size() - 1).getTimestamp();
+		long ts = getLastTimestamp();
 		for (int i = 0; i < times; i++) {
-			ts = ts + timeInterval.getMillis();
-			emit(elem, ts);
+
+			ts = moment.getTimestamp(ts);
+			addWithShift(elem, ts, moment.getShift());
 		}
+		return this;
+	}
+
+	private long calculateShiftDifference(Pair<StreamRecord<T>, Long> entry) {
+		return entry.getLeft().getTimestamp() + entry.getRight();
+	}
+
+	/**
+	 * Repeat the current input list.
+	 * The time span between records in your already defined list will
+	 * be kept.
+	 *
+	 * @param times number of times the input ist will be repeated.
+	 */
+	public EventTimeInputBuilder<T> repeatAll(int times) {
+		repeatAll(new Instant(), times);
 		return this;
 	}
 
@@ -175,13 +242,21 @@ public class EventTimeInputBuilder<T> implements EventTimeInput<T> {
 	 * @param times    number of times the input ist will be repeated.
 	 */
 	public EventTimeInputBuilder<T> repeatAll(TimeSpan timeSpan, int times) {
-		long start = input.get(input.size() - 1).getTimestamp();
-		List<StreamRecord<T>> toAppend = new ArrayList<>();
+		long start = getLastTimestamp();
+		List<Pair<StreamRecord<T>, Long>> toAppend = new ArrayList<>();
 		for (int i = 0; i < times; i++) {
-			toAppend.addAll(repeatInput(timeSpan.getMillis(), start));
-			start = toAppend.get(toAppend.size() - 1).getTimestamp();
+			toAppend.addAll(repeatInput(timeSpan.getTimestamp(0), start));
+			start = calculateShiftDifference(toAppend.get(toAppend.size() - 1));
 		}
-		input.addAll(toAppend);
+		input.addAll(toAppend); //TODO change
+		return this;
+	}
+
+	/**
+	 * Causes the last timestamp to be MAX_VALUE.
+	 */
+	public EventTimeInputBuilder<T> flushOpenWindowsOnTermination() {
+		flushWindows = true;
 		return this;
 	}
 
@@ -192,42 +267,66 @@ public class EventTimeInputBuilder<T> implements EventTimeInput<T> {
 	 */
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
-		for (StreamRecord<T> r : input) {
-			builder.append("value: " + r.getValue() + " timestamp: " + r.getTimestamp() + "\n");
+		for (Pair<StreamRecord<T>, Long> r : input) {
+			builder.append("value: " + r.getValue() +
+					" timestamp: " + r.getLeft().getTimestamp() + "\n");
 		}
 		return builder.toString();
 	}
 
 	@Override
-	public List<StreamRecord<T>> getInput() {
-		return input;
+	public Boolean getFlushWindowsSetting() {
+		return flushWindows;
 	}
 
-	private List<StreamRecord<T>> repeatInput(long time, long startTimeStamp) {
+	@Override
+	public List<StreamRecord<T>> getInput() {
+		ArrayList<StreamRecord<T>> records = new ArrayList<>();
+		for (Pair<StreamRecord<T>, Long> r : input) {
+			records.add(r.getLeft());
+		}
+		return records;
+	}
 
-		List<StreamRecord<T>> append = new ArrayList<>();
-		Iterator<StreamRecord<T>> it = input.iterator();
+	private List<Pair<StreamRecord<T>, Long>> repeatInput(long time, long startTimeStamp) {
+
+		List<Pair<StreamRecord<T>, Long>> append = new ArrayList<>();
+		Iterator<Pair<StreamRecord<T>, Long>> it = input.iterator();
 		long last = startTimeStamp;
 		long delta = time;
 
 		//first step
-		StreamRecord<T> record = it.next();
-		append.add(new StreamRecord<T>(record.getValue(),
-				last + delta));
-		long previous = record.getTimestamp();
+		Pair<StreamRecord<T>, Long> record = it.next();
+		append.add(Pair.of(copyRecord(record.getLeft(), last + delta), 0L));
+		long previous = record.getLeft().getTimestamp();
+		long previousShift = record.getRight();
 		last = last + delta;
 
 		while (it.hasNext()) {
 			record = it.next();
-			delta = record.getTimestamp() - previous;
+			delta = record.getLeft().getTimestamp() - previous;
+			if (previousShift > 0 && record.getRight() > 0) {
+				delta -= record.getRight();
+			}
 			if (last + delta < 0) {
 				throw new UnsupportedOperationException("Negative timestamp: " + last + delta);
 			}
-			append.add(new StreamRecord<T>(record.getValue(),
-					last + delta));
+			if (it.hasNext()) {
+				append.add(Pair.of(copyRecord(record.getLeft(),
+						last + delta), 0L));
+			} else {
+				append.add(Pair.of(copyRecord(record.getLeft(),
+						last + delta), record.getRight()));
+			}
 			last = last + delta;
-			previous = record.getTimestamp();
+			previous = record.getLeft().getTimestamp();
+			previousShift = record.getRight();
 		}
 		return append;
 	}
+
+	private StreamRecord<T> copyRecord(StreamRecord<T> record, Long timestamp) {
+		return new StreamRecord<T>(record.getValue(), timestamp);
+	}
+
 }

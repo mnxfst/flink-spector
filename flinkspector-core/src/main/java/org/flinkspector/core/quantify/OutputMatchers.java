@@ -16,7 +16,7 @@
 
 package org.flinkspector.core.quantify;
 
-import org.flinkspector.core.quantify.list.OutputWithSize;
+import org.flinkspector.core.quantify.records.OutputWithSize;
 import org.hamcrest.core.AllOf;
 import org.hamcrest.core.AnyOf;
 import org.hamcrest.core.IsNot;
@@ -40,15 +40,14 @@ public class OutputMatchers {
 	 */
 	@SafeVarargs
 	public static <T> OutputMatcher<T> anyOf(OutputMatcher<T>... matchers) {
-		return OutputMatcherFactory.create(AnyOf.<Iterable<T>>anyOf(matchers));
+		return OutputMatcherFactory.create(AnyOf.anyOf(matchers));
 	}
 
 	/**
 	 * Creates a matcher that wraps an existing matcher, but inverts the logic by which
 	 * it will match.
 	 *
-	 * @param matcher
-	 *     the matcher whose sense should be inverted
+	 * @param matcher the matcher whose sense should be inverted
 	 */
 	public static <T> OutputMatcher<T> not(OutputMatcher<T> matcher) {
 		return OutputMatcherFactory.create(IsNot.not(matcher));
@@ -56,7 +55,7 @@ public class OutputMatchers {
 
 	/**
 	 * Creates a matcher that matches when both of the specified matchers match the examined object.
-	 * <p/>
+	 * <p>
 	 * For example:
 	 * <pre>assertThat("fab", both(containsString("a")).and(containsString("b")))</pre>
 	 */
@@ -75,8 +74,7 @@ public class OutputMatchers {
 	 * Creates a matcher for output that matches when the <code>size</code> of the output
 	 * satisfies the specified matcher.
 	 *
-	 * @param sizeMatcher
-	 *     a matcher for the length of an examined array
+	 * @param sizeMatcher a matcher for the length of an examined array
 	 */
 	public static <E> OutputMatcher<E> outputWithSize(org.hamcrest.Matcher<? super java.lang.Integer> sizeMatcher) {
 		return OutputMatcherFactory.create(OutputWithSize.<E>outputWithSize(sizeMatcher));
@@ -86,8 +84,7 @@ public class OutputMatchers {
 	 * Creates a matcher for output that matches when the <code>length</code> of the output
 	 * equals the specified <code>size</code>.
 	 *
-	 * @param size
-	 *     the length that an examined array must have for a positive match
+	 * @param size the length that an examined array must have for a positive match
 	 */
 	public static <E> OutputMatcher<E> outputWithSize(int size) {
 		return OutputMatcherFactory.create(OutputWithSize.<E>outputWithSize(size));

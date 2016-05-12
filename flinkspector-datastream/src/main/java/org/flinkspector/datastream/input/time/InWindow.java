@@ -13,26 +13,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.flinkspector.core
 
-import java.util.{List => JList}
+package org.flinkspector.datastream.input.time;
 
-import org.flinkspector.core.input.Input
-import org.scalatest.concurrent.Timeouts
-import org.scalatest.mock.MockitoSugar
-import org.scalatest.{FlatSpec, Matchers, OptionValues}
+import java.util.concurrent.TimeUnit;
 
-import scala.collection.JavaConversions._
+/**
+ * Sets the timestamp of a record to a value which fits into a certain window.
+ */
+public class InWindow extends Moment {
 
-abstract class CoreSpec
-  extends FlatSpec
-    with Matchers
-    with OptionValues
-    with MockitoSugar
-    with Timeouts {
+	private final long timeSpan;
 
-  class TestInput[T](input: List[T]) extends Input[T] {
-    override def getInput: JList[T] = input
-  }
+	public static InWindow to(long time, TimeUnit timeUnit) {
+		return new InWindow(time, timeUnit);
+	}
 
+	private InWindow(long time, TimeUnit timeUnit) {
+		this.timeSpan = timeUnit.toMillis(time);
+	}
+
+	@Override
+	public long getTimestamp(long currentTimestamp) {
+		return timeSpan - 1;
+	}
+
+	@Override
+	public long getShift() {
+		return 1;
+	}
 }

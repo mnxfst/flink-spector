@@ -1,7 +1,7 @@
 # Flinkspector
 
 This project provides a framework to define unit tests for Apache Flink data flows.
-The framework executes the data flows locally and verifies the output using predefined expectations. 
+The framework executes data flows locally and verifies the output using predefined expectations. 
 
 Features include:
 - Concise DSL to define test scenarios.
@@ -39,10 +39,10 @@ public void testWindowing() {
 	// Define the input DataStream:	
 	DataStream<Tuple2<Integer, String>> testStream =
 			createTimedTestStreamWith(Tuple2.of(1, "fritz"))
-					.emit(Tuple2.of(1, "hans"), after(15, seconds))	
-					.emit(Tuple2.of(1, "heidi"), before(5, seconds))	
-					.emit(Tuple2.of(3, "peter"), after(20, seconds), times(10))	
-					.repeatAll(after(10, seconds), times(1))
+					.emit(Tuple2.of(1, "hans"))
+					.emit(Tuple2.of(1, "heidi"), intoWindow(30, seconds)
+					.emit(Tuple2.of(3, "peter"), intoWindow(1, minutes)
+					.repeatAll(times(2))
 					.close();
 
 		
@@ -64,10 +64,50 @@ You can find more extensive examples here:
 
 ## Getting started
 
+### Get the Latest Release:
+> Note: The current build works with Flink versions 1.0.0 and later.
+> If you're using Scala 2.11 change the ending of the artifactId.
+
+Include in your project's pom.xml:
+ ```xml
+<repositories>
+    <repository>
+        <id>otto-bintray</id>
+        <url>https://dl.bintray.com/ottogroup/maven</url>
+    </repository>
+</repositories>
+```
+ ```xml
+<dependency>
+    <groupId>org.flinkspector</groupId>
+    <articaftId>flinkspector-dataset_2.10</artifactId>
+    <version>0.3</version>
+</dependency>
+```
+or for the Flink DataStream API:
+
+```xml
+<dependency>
+    <groupId>org.flinkspector</groupId>
+    <articaftId>flinkspector-datastream_2.10</artifactId>
+    <version>0.3</version>
+</dependency>
+```
+If you want to use assertions you should also include hamcrest:
+```xml
+<dependency>
+    <groupId>org.hamcrest</groupId>
+    <artifactId>hamcrest-all</artifactId>
+    <version>1.3</version>
+    <type>jar</type>
+    <scope>test</scope>
+</dependency>
+```
+
 ### Manual Build:
 1. Clone this repo: `git clone https://github.com/ottogroup/flink-spector`.
 
-> Note: The current build works with Flink version 1.0.0.
+> Note: The current build works with Flink versions 1.0.0 and later.
 > If you're using an older version, clone the matching branch.
 
 2. Build with maven: `maven install`.
@@ -76,7 +116,7 @@ You can find more extensive examples here:
 <dependency>
     <groupId>org.flinkspector</groupId>
     <articaftId>flinkspector-dataset</artifactId>
-    <version>0.1-SNAPSHOT</version>
+    <version>0.4-SNAPSHOT</version>
 </dependency>
 ```
 or for the Flink DataStream API:
@@ -85,7 +125,7 @@ or for the Flink DataStream API:
 <dependency>
     <groupId>org.flinkspector</groupId>
     <articaftId>flinkspector-datastream</artifactId>
-    <version>0.1-SNAPSHOT</version>
+    <version>0.4-SNAPSHOT</version>
 </dependency>
 ```
 
